@@ -1,68 +1,49 @@
+from time import sleep
+import os
+import pandas as pd
+
 import requests
 
 PLAYERS_URL = "https://www.balldontlie.io/api/v1/players"
 PLAYERS_PAGES_NUMBER = 209
+PLAYERS_FILE_PATH = "../backend/players.csv"
 
 
-class Team:
-    def __init__(self,
-                 abbreviation: str,
-                 city: str,
-                 conference: str,
-                 division: str,
-                 team_name: str):
-        self.abbreviation = abbreviation
-        self.city = city
-        self.conference = conference
-        self.division = division
-        self.team_name = team_name
+def update_player_db():
+    players_dataframe = pd.DataFrame(columns=['first_name', 'last_name', 'position', 'team_name', 'team_city',
+                                              'team_abbr', 'team_conference', 'team_division'])
 
+    first_name = []
+    last_name = []
+    position = []
+    team_name = []
+    team_city = []
+    team_abbr = []
+    team_conference = []
+    team_division = []
+    for page in range(0, PLAYERS_PAGES_NUMBER):
+        response: requests.Response = requests.get(PLAYERS_URL, params={'page': page, 'per_page': 100})
+        if response.status_code == 200:
+            for player_json in response.json()['data']:
+                first_name.append(player_json['first_name'])
+                last_name.append(player_json['last_name'])
+                position.append(player_json['position'])
+                team_name.append(player_json['team']['full_name'])
+                team_city.append(player_json['team']['city'])
+                team_abbr.append(player_json['team']['abbreviation'])
+                team_conference.append(player_json['team']['conference'])
+                team_division.append(player_json['team']['division'])
+        else:
+            print(f"Error: {response.status_code}")
+            exit()
+        sleep(2)
+    players_dataframe['first_name'] = first_name
+    players_dataframe['last_name'] = last_name
+    players_dataframe['position'] = position
+    players_dataframe['team_name'] = team_name
+    players_dataframe['team_city'] = team_city
+    players_dataframe['team_abbr'] = team_abbr
+    players_dataframe['team_conference'] = team_conference
+    players_dataframe['team_division'] = team_division
+    players_dataframe.to_csv(PLAYERS_FILE_PATH, index=False)
 
-class Player:
-    def __init__(self,
-                 first_name: str,
-                 last_name: str,
-                 position: str,
-                 team: Team):
-        self.first_name = first_name
-        self.last_name = last_name
-        self.position = position
-        self.team = team
-
-    def print_player(self):
-        print("\nNBA PLAYER CARD")
-        print("Player: ", self.first_name + " " + self.last_name)
-        print("Position: ", self.position)
-        print("Team: ", self.team.team_name)
-        print("****************\n")
-
-
-def get_all_players():
-    player_list: list[Player] = []
-    response: requests.Response = requests.get(PLAYERS_URL)
-    if response.status_code == 200:
-        for player_json in response.json()['data']:
-            player_list.append(_return_player(player_json))
-    else:
-        print(f"Error: {response.status_code}")
-
-    return player_list
-
-
-def _return_player(player_json: dict) -> Player:
-    team_dict: dict = player_json['team']
-    team_abbreviation: str = team_dict['abbreviation']
-    team_city: str = team_dict['city']
-    team_conference: str = team_dict['conference']
-    team_division: str = team_dict['division']
-    team_name: str = team_dict['full_name']
-
-    team: Team = Team(team_abbreviation, team_city, team_conference, team_division, team_name)
-
-    player_name = player_json['first_name']
-    player_last_name = player_json['last_name']
-    player_position = player_json['position']
-
-    return Player(player_name, player_last_name, player_position, team)
-
-# TODO: return all the players exploiting the page number

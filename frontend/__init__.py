@@ -1,10 +1,7 @@
 from backend.players import *
+import os
 
-player_list = get_all_players()
+if os.path.exists('../backend/players.csv'):
+    print("Hello")
 
-if not player_list:
-    print("Error!")
-else:
-    for player in player_list:
-        player.print_player()
-
+update_player_db()
