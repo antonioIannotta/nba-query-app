@@ -9,7 +9,7 @@ PLAYERS_PAGES_NUMBER = 209
 PLAYERS_FILE_PATH = "../backend/players.csv"
 
 
-def update_player_db():
+def player_db():
     players_dataframe = pd.DataFrame(columns=['first_name', 'last_name', 'position', 'team_name', 'team_city',
                                               'team_abbr', 'team_conference', 'team_division'])
 
